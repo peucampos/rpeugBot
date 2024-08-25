@@ -7,7 +7,6 @@ import random
 import re
 import argparse
 
-
 parser = argparse.ArgumentParser(description="Iniciar o RPeuG Bot")
 parser.add_argument("--token", type=str, required=True, help="O token do bot do Discord")
 args = parser.parse_args()
@@ -31,20 +30,44 @@ async def nc(ctx, *messages: str):
         command_message = ctx.message
 
         if len(messages) == 0:
-            await ctx.send("Formato inválido. Use algo como !nc \"Primeira conquista: 10xp\" \"Segunda conquista:20xp\" \"Terceira conquista:230xp\"")
+            await ctx.send("Formato inválido. Use algo como !nc \"1Conquista verde\" \"3Conquista amarela\"")
             return
 
         # Create a view to hold the buttons
         view = discord.ui.View()
 
         # Create buttons with sequential labels
-        for index, message in enumerate(messages):
-            button = discord.ui.Button(label=f"Conquista {index + 1}", style=discord.ButtonStyle.green)
+        for index, msg in enumerate(messages):
+            # Extract the color code and message
+            color_code = 0
+            message = "";
+            if msg[0].isdigit():
+               color_code = int(msg[0]) 
+               message = msg[1:].strip()  # Remove the color code from the message
+            else:
+               message = msg
+
+            # Define color mapping
+            color_map = {
+                0: discord.Color.default(),
+                1: discord.Color.green(),
+                2: discord.Color.blue(),
+                3: discord.Color.yellow()
+            }
             
+            # Default if the color code is not in the map
+            color = color_map.get(color_code, discord.Color.default())
+
+            button = discord.ui.Button(label=f"Conquista {index + 1}", style=discord.ButtonStyle.green)
+
             # Define the callback function for the button
-            async def button_callback(interaction: discord.Interaction, msg=message):
+            async def button_callback(interaction: discord.Interaction, idx=index, msg=message, color=color):
                 if any(role.name == "GM" for role in interaction.user.roles):
-                    await interaction.response.send_message(msg, ephemeral=False)
+                    # Create the embed for the result
+                    embed = discord.Embed(title=f"Conquista {idx + 1}: {msg}", color=color)
+
+                    # Send the embed as a response
+                    await interaction.response.send_message(embed=embed, ephemeral=False)
                 else:
                     await interaction.response.send_message("Tire suas mãos daí, mortal!", ephemeral=True, delete_after=5)
 
@@ -64,6 +87,9 @@ async def nc(ctx, *messages: str):
     else:
         await ctx.send("Esqueça, só os deuses fazem isso.", delete_after=5)  # Delete after 5 seconds
 
+
+# Melhorias
+# Rolar varios dados com varios bonus, tipo 1d10+6+1d6+4
 @bot.command()
 async def roll(ctx, roll="", action=""):
     # Parse the roll parameter using regex
@@ -87,10 +113,12 @@ async def roll(ctx, roll="", action=""):
     # Create an embed for the result
     embed = discord.Embed(title="Resultado da Rolagem", color=discord.Color.blue())
     
-    if (action):
+    embed.add_field(name="Rolagem", value=f"{num_dice}d{die_size}{bonus}")
+
+    if action:
         embed.add_field(name="Ação", value=action, inline=False)
     
-    embed.add_field(name="Dados Rolados", value=f'`{"`, `".join(map(str, rolls))}`', inline=False)
+    embed.add_field(name="Resultado dos dados", value=f'`{"`, `".join(map(str, rolls))}`', inline=False)
     
     if bonus:
         embed.add_field(name="Bônus", value=f'`{bonus}`', inline=False)
