@@ -5,6 +5,12 @@ from discord.ext import commands
 import asyncio
 import random
 import re
+import argparse
+
+
+parser = argparse.ArgumentParser(description="Iniciar o RPeuG Bot")
+parser.add_argument("--token", type=str, required=True, help="O token do bot do Discord")
+args = parser.parse_args()
 
 intents = discord.Intents.default()
 intents.message_content = True  # Ensure the bot can read message content
@@ -95,4 +101,4 @@ async def roll(ctx, roll="", action=""):
     await ctx.send(embed=embed)
     
 # Run the bot
-bot.run('MTI3NjU2NDYwMzU1MTIyMzg1OQ.GSFXf-.CK0N7ETmLcYJVvzrkfrW5IWh0zBu_nysmZgpKc')
+bot.run(args.token)
